@@ -1,0 +1,161 @@
+For Problem 1:
+
+JAVA CODE:
+import org.junit.contrib.quickcheck.Property;
+import org.junit.contrib.quickcheck.generator.Range;
+import static org.junit.Assert.assertTrue;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
+public class CollectionOperationsTest {
+    // Property to show that sorting a collection does not change its size
+    @Property(trials = 1000)
+    public void sortingDoesNotChangeSize(List<Integer> list) {
+        int originalSize = list.size();
+        List<Integer> sortedList = new ArrayList<>(list);
+        // Sorting the list
+        sortedList.sort(null);
+        assertTrue("Sorting changes the size of the collection", originalSize == sortedList.size());
+    }
+
+    // Property to show that adding an element to a collection does not decrease its size
+    @Property(trials = 1000)
+    public void addingElementDoesNotDecreaseSize(List<Integer> list, int element) {
+        int originalSize = list.size();
+        List<Integer> newList = new ArrayList<>(list);
+        // Adding the element to the list if it doesn't already exist
+        if (!newList.contains(element)) {
+            newList.add(element);
+        }
+        assertTrue("Adding an element decreases the size of the collection", originalSize <= newList.size());
+    }
+}
+Defined two property-based tests. The first test, sortingDoesNotChangeSize, 
+verifies that sorting a collection does not change its size. 
+The second test, addingElementDoesNotDecreaseSize, 
+checks that adding an element to a collection does not decrease its size.
+
+
+For Problem 2: 
+
+JAVA CODE:
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.contrib.quickcheck.Property;
+import org.junit.contrib.quickcheck.generator.Range;
+import static org.junit.Assert.assertEquals;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
+public class SerializationTest {
+    // Define data structure for representing students
+    static class Student {
+        String id;
+        String name;
+        List<String> interests;
+        String address;
+
+        public Student(String id, String name, List<String> interests, String address) {
+            this.id = id;
+            this.name = name;
+            this.interests = interests;
+            this.address = address;
+        }
+    }
+
+    // Serialization function
+    public String serialize(Student student) throws JsonProcessingException {
+        ObjectMapper objectMapper = new ObjectMapper();
+        return objectMapper.writeValueAsString(student);
+    }
+
+    // Deserialization function
+    public Student deserialize(String json) throws IOException {
+        ObjectMapper objectMapper = new ObjectMapper();
+        return objectMapper.readValue(json, Student.class);
+    }
+
+    // Property-based test to check serialization and deserialization are inverses
+    @Property(trials = 1000)
+    public void serializationDeserializationInverse(Student student) throws IOException {
+        String json = serialize(student);
+        Student deserializedStudent = deserialize(json);
+        assertEquals("Deserialization after serialization should return the original object", student, deserializedStudent);
+    }
+}
+
+Defined a Student class representing student information. Implemented serialization and deserialization
+functions using the Jackson library for JSON handling. Then, wrote a property-based test 
+(serializationDeserializationInverse) to ensure that serialization followed by deserialization 
+returns the original student object.
+
+For Problem 3:
+
+JAVA CODE:
+import org.junit.contrib.quickcheck.Property;
+import org.junit.contrib.quickcheck.generator.Range;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+
+import java.util.Arrays;
+import java.util.List;
+
+public class ColorTest {
+    // Define data structure for representing colors
+    static class Color {
+        enum ColorType {
+            NAMED,
+            RGB,
+            CMYK
+        }
+
+        ColorType type;
+        String name;
+        int[] values; // RGB or CMYK values
+
+        public Color(ColorType type, String name, int[] values) {
+            this.type = type;
+            this.name = name;
+            this.values = values;
+        }
+    }
+
+    // Function to pack color into array
+    public int[] packColor(Color color) {
+        int[] packed = new int[color.values.length + 1];
+        packed[0] = color.type.ordinal();
+        System.arraycopy(color.values, 0, packed, 1, color.values.length);
+        return packed;
+    }
+
+    // Function to unpack array into color
+    public Color unpackColor(int[] packed) {
+        Color.ColorType type = Color.ColorType.values()[packed[0]];
+        int[] values = Arrays.copyOfRange(packed, 1, packed.length);
+        return new Color(type, "", values); // Assuming name is not relevant for packing/unpacking
+    }
+
+    // Property-based test to check packing and unpacking are inverses
+    @Property(trials = 1000)
+    public void packingUnpackingInverse(Color color) {
+        int[] packed = packColor(color);
+        Color unpacked = unpackColor(packed);
+        assertEquals("Unpacking after packing should return the original color", color, unpacked);
+    }
+
+    // Property-based test to check packing generates the same array
+    @Property(trials = 1000)
+    public void packingGeneratesSameArray(Color color) {
+        int[] packed = packColor(color);
+        assertArrayEquals("Packing should generate the same array", packed, packColor(unpackColor(packed)));
+    }
+}
+
+Define a Color class representing colors in three different ways: named colors, 
+RGB colors, and CMYK colors. Implemented functions to pack and unpack colors into arrays. Then, 
+wrote property-based tests to ensure that packing and unpacking are inverses of each other and 
+that packing generates the same array.
